@@ -1,0 +1,39 @@
+{
+  "name": "veylora-ux",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "setup": "npm install && npm --prefix backend install && npx playwright install chromium",
+    "dev": "vite",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:all": "concurrently -k -n \"BACKEND,FRONTEND\" -c \"blue,green\" \"npm --prefix backend run dev\" \"npm run dev\"",
+    "start": "npm run dev:all",
+    "build": "tsc && vite build",
+    "build:backend": "npm --prefix backend run build",
+    "build:all": "npm run build && npm --prefix backend run build",
+    "test": "npm --prefix backend run test",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.441.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.2",
+    "recharts": "^2.12.7",
+    "tailwind-merge": "^2.5.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.5",
+    "@types/react": "^18.3.10",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.2.5",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.11",
+    "typescript": "^5.5.3",
+    "vite": "^5.4.6"
+  }
+}
