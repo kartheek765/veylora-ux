@@ -71,23 +71,42 @@ export class KnowledgeBaseService {
         'If a Playwright test terminates early with a domain error, ensure all subdomains or SSO redirect domains are added to "Allowed Domains".'
       ]
     },
-    '/personas': {
-      route: '/personas',
-      name: 'Persona Configuration',
+    '/synthetic-agents': {
+      route: '/synthetic-agents',
+      name: 'Synthetic Agent Sandbox',
       description: 'Define synthetic user models with distinct cognitive traits, device contexts, accessibility needs, and goal orientations.',
       keyControls: [
-        { name: 'Create Persona', action: 'Opens persona creation drawer.', purpose: 'Create a synthetic user profile.' },
+        { name: 'Create Synthetic Agent', action: 'Opens agent creation drawer.', purpose: 'Create a synthetic user profile.' },
         { name: 'Familiarity Slider', action: 'Choose Novice, Moderate, or Expert.', purpose: 'Influences synthetic scanning speed and heuristic tolerance.' },
         { name: 'Patience & Reading Tendency', action: 'Configure patience level and skimmer vs methodical behavior.', purpose: 'Simulates drop-offs and banner blindness.' },
         { name: 'Accessibility Needs', action: 'Toggle needs like high contrast, keyboard navigation, or screen reader labels.', purpose: 'Detects accessibility violations specific to user groups.' }
       ],
       commonWorkflows: [
-        'Select template personas like First-time Visitor or Mobile-First Browser.',
+        'Select template synthetic agents like First-time Visitor or Mobile-First Browser.',
         'Adjust traits to reflect your product target demographic.',
-        'Enable or disable specific personas for targeted test runs.'
+        'Enable or disable specific synthetic agents for targeted test runs.'
       ],
       troubleshooting: [
-        'Ensure at least one persona is enabled before initiating a test run.'
+        'Ensure at least one synthetic agent is enabled before initiating a test run.'
+      ]
+    },
+    '/personas': {
+      route: '/personas',
+      name: 'Synthetic Agent Sandbox',
+      description: 'Define synthetic user models with distinct cognitive traits, device contexts, accessibility needs, and goal orientations.',
+      keyControls: [
+        { name: 'Create Synthetic Agent', action: 'Opens agent creation drawer.', purpose: 'Create a synthetic user profile.' },
+        { name: 'Familiarity Slider', action: 'Choose Novice, Moderate, or Expert.', purpose: 'Influences synthetic scanning speed and heuristic tolerance.' },
+        { name: 'Patience & Reading Tendency', action: 'Configure patience level and skimmer vs methodical behavior.', purpose: 'Simulates drop-offs and banner blindness.' },
+        { name: 'Accessibility Needs', action: 'Toggle needs like high contrast, keyboard navigation, or screen reader labels.', purpose: 'Detects accessibility violations specific to user groups.' }
+      ],
+      commonWorkflows: [
+        'Select template synthetic agents like First-time Visitor or Mobile-First Browser.',
+        'Adjust traits to reflect your product target demographic.',
+        'Enable or disable specific synthetic agents for targeted test runs.'
+      ],
+      troubleshooting: [
+        'Ensure at least one synthetic agent is enabled before initiating a test run.'
       ]
     },
     '/scenarios': {
@@ -233,10 +252,10 @@ export class KnowledgeBaseService {
       name: 'Veylora UX Workbench',
       description: 'Local-first AI-assisted UX testing and synthetic-user simulation workbench.',
       keyControls: [
-        { name: 'Navigation Sidebar', action: 'Access all sections: Overview, Projects, Personas, Scenarios, Runs, Findings, Comparisons, Roadmap, Reports, Settings, Detective.', purpose: 'Main application navigation.' }
+        { name: 'Navigation Sidebar', action: 'Access all sections: Overview, Projects, Synthetic Agent Sandbox, Scenarios, Runs, Findings, Comparisons, Roadmap, Reports, Settings, Detective.', purpose: 'Main application navigation.' }
       ],
       commonWorkflows: [
-        'Create projects, configure personas, launch real Playwright tests, and review evidence-grounded findings.'
+        'Create projects, configure synthetic agents, launch real Playwright tests, and review evidence-grounded findings.'
       ],
       troubleshooting: [
         'Use sidebar navigation to jump between workbench modules.'

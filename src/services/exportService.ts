@@ -77,7 +77,7 @@ export class ExportService {
     <div class="metric-grid">
       <div class="metric-card">
         <div class="metric-val">${report.executiveSummary.totalPersonas}</div>
-        <div class="metric-lbl">Personas Evaluated</div>
+        <div class="metric-lbl">Synthetic Agents Evaluated</div>
       </div>
       <div class="metric-card">
         <div class="metric-val">${report.executiveSummary.totalScenarios}</div>

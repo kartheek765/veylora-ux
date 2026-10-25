@@ -21,7 +21,7 @@ export const Sidebar: React.FC = () => {
     { to: '/', label: 'Overview', icon: LayoutDashboard },
     { to: '/detective', label: 'Intent Detective', icon: Sparkles, isSignature: true },
     { to: '/projects', label: 'Projects', icon: FolderKanban },
-    { to: '/personas', label: 'Persona Studio', icon: Users },
+    { to: '/synthetic-agents', label: 'Synthetic Agent Sandbox', icon: Users },
     { to: '/scenarios', label: 'Scenarios', icon: GitFork },
     { to: '/runs', label: 'Test Runs', icon: PlayCircle },
     { to: '/findings', label: 'Findings Explorer', icon: AlertTriangle },

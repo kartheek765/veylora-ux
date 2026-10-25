@@ -12,9 +12,27 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenQuickRun }) => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Route label dictionary for exact module titles
+  const ROUTE_LABELS: Record<string, string> = {
+    '': 'Overview',
+    'detective': 'Intent Detective',
+    'projects': 'Projects',
+    'synthetic-agents': 'Synthetic Agent Sandbox',
+    'agent-sandbox': 'Synthetic Agent Sandbox',
+    'personas': 'Synthetic Agent Sandbox',
+    'scenarios': 'Scenarios',
+    'runs': 'Test Runs',
+    'findings': 'Findings Explorer',
+    'comparisons': 'Comparisons',
+    'roadmap': 'Fix Roadmap',
+    'reports': 'Reports',
+    'settings': 'Settings',
+  };
+
   // Generate readable breadcrumbs
   const pathParts = location.pathname.split('/').filter(Boolean);
-  const breadcrumbName = pathParts.length === 0 ? 'Overview' : pathParts[0].charAt(0).toUpperCase() + pathParts[0].slice(1);
+  const firstSegment = pathParts[0] || '';
+  const breadcrumbName = ROUTE_LABELS[firstSegment] || (pathParts.length === 0 ? 'Overview' : firstSegment.charAt(0).toUpperCase() + firstSegment.slice(1));
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +49,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenQuickRun }) => {
           Veylora UX
         </Link>
         <span className="text-text-muted">/</span>
-        <span className="font-semibold text-text-primary capitalize">{breadcrumbName}</span>
+        <span className="font-semibold text-text-primary">{breadcrumbName}</span>
         {pathParts.length > 1 && (
           <>
             <span className="text-text-muted">/</span>
@@ -49,7 +67,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenQuickRun }) => {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search findings, runs, personas... (↵)"
+          placeholder="Search findings, runs, synthetic agents... (↵)"
           className="w-full bg-surface border border-border rounded-lg pl-8 pr-3 py-1.5 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
         />
       </form>

@@ -5,7 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Input } from '../../components/ui/Input';
 import { api } from '../../services/api';
-import { Run, Project, Persona, Scenario } from '../../types';
+import { Run, Project, SyntheticAgent, Scenario } from '../../types';
 import { RunConfigModal } from './RunConfigModal';
 import { 
   PlayCircle, 
@@ -23,7 +23,7 @@ export const RunsPage: React.FC = () => {
   const navigate = useNavigate();
   const [runs, setRuns] = useState<Run[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [personas, setPersonas] = useState<Persona[]>([]);
+  const [syntheticAgents, setSyntheticAgents] = useState<SyntheticAgent[]>([]);
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [search, setSearch] = useState('');
@@ -33,15 +33,15 @@ export const RunsPage: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [r, p, per, sc] = await Promise.all([
+      const [r, p, agentList, sc] = await Promise.all([
         api.getRuns(),
         api.getProjects(),
-        api.getPersonas(),
+        api.getSyntheticAgents(),
         api.getScenarios()
       ]);
       setRuns(Array.isArray(r) ? r : []);
       setProjects(Array.isArray(p) ? p : []);
-      setPersonas(Array.isArray(per) ? per : []);
+      setSyntheticAgents(Array.isArray(agentList) ? agentList : []);
       setScenarios(Array.isArray(sc) ? sc : []);
     } catch (err) {
       console.error('Failed to load runs:', err);
@@ -192,7 +192,7 @@ export const RunsPage: React.FC = () => {
                 <tr className="border-b border-border bg-surface-subtle/70 text-text-muted uppercase text-[10px] tracking-wider">
                   <th className="py-3 px-4 font-semibold">Run ID</th>
                   <th className="py-3 px-4 font-semibold">Target Project</th>
-                  <th className="py-3 px-4 font-semibold">Personas & Scenario</th>
+                  <th className="py-3 px-4 font-semibold">Synthetic Agents & Scenario</th>
                   <th className="py-3 px-4 font-semibold">Outcome</th>
                   <th className="py-3 px-4 font-semibold">Actions / Budget</th>
                   <th className="py-3 px-4 font-semibold">Duration</th>
@@ -203,9 +203,9 @@ export const RunsPage: React.FC = () => {
               <tbody className="divide-y divide-border">
                 {filtered.map((run) => {
                   const project = projects.find(p => p.id === run.projectId);
-                  const personaNames = (run.personaIds || [])
-                    .map(pId => personas.find(p => p.id === pId)?.name || pId)
-                    .join(', ') || 'Default Persona';
+                  const agentNames = (run.personaIds || [])
+                    .map(pId => syntheticAgents.find(p => p.id === pId)?.name || pId)
+                    .join(', ') || 'Default Agent';
                   const scenario = scenarios.find(s => (run.scenarioIds || []).includes(s.id));
 
                   return (
@@ -224,7 +224,7 @@ export const RunsPage: React.FC = () => {
 
                       <td className="py-3.5 px-4 max-w-xs">
                         <div className="truncate text-text-secondary font-medium">
-                          {personaNames}
+                          {agentNames}
                         </div>
                         <div className="truncate text-[11px] text-text-muted mt-0.5">
                           {scenario?.title || 'Synthetic Journey'}

@@ -5,7 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { Badge } from '../../components/ui/Badge';
 import { api } from '../../services/api';
-import { Project, Persona, Scenario, ViewportPreset } from '../../types';
+import { Project, SyntheticAgent, Scenario, ViewportPreset } from '../../types';
 import { Play, Shield, Info, Monitor, Smartphone, Laptop, Tablet } from 'lucide-react';
 import { toast } from '../../components/ui/Toast';
 
@@ -22,7 +22,7 @@ export const RunConfigModal: React.FC<RunConfigModalProps> = ({
 }) => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
-  const [personas, setPersonas] = useState<Persona[]>([]);
+  const [syntheticAgents, setSyntheticAgents] = useState<SyntheticAgent[]>([]);
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
 
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
@@ -38,19 +38,19 @@ export const RunConfigModal: React.FC<RunConfigModalProps> = ({
     async function loadConfigData() {
       if (!isOpen) return;
       try {
-        const [pList, perList, sList] = await Promise.all([
+        const [pList, agentList, sList] = await Promise.all([
           api.getProjects(),
-          api.getPersonas(),
+          api.getSyntheticAgents(),
           api.getScenarios()
         ]);
 
         setProjects(pList);
-        setPersonas(perList);
+        setSyntheticAgents(agentList);
         setScenarios(sList);
 
         const targetProjId = defaultProjectId || pList[0]?.id || '';
         setSelectedProjectId(targetProjId);
-        setSelectedPersonaIds(perList.slice(0, 2).map((p: Persona) => p.id));
+        setSelectedPersonaIds(agentList.slice(0, 2).map((p: SyntheticAgent) => p.id));
         
         const matchedScenario = sList.find((s: Scenario) => s.projectId === targetProjId) || sList[0];
         setSelectedScenarioId(matchedScenario?.id || '');
@@ -76,7 +76,7 @@ export const RunConfigModal: React.FC<RunConfigModalProps> = ({
       return;
     }
     if (selectedPersonaIds.length === 0) {
-      toast.error('Select at least one synthetic persona');
+      toast.error('Select at least one synthetic agent');
       return;
     }
     if (!selectedScenarioId) {
@@ -133,18 +133,18 @@ export const RunConfigModal: React.FC<RunConfigModalProps> = ({
           )}
         </div>
 
-        {/* Persona Multi-selection */}
+        {/* Synthetic Agent Multi-selection */}
         <div>
           <label className="block text-xs font-medium text-text-secondary mb-1.5">
-            Select Synthetic Personas ({selectedPersonaIds.length} chosen)
+            Select Synthetic Agents ({selectedPersonaIds.length} chosen)
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {personas.map((persona) => {
-              const isSelected = selectedPersonaIds.includes(persona.id);
+            {syntheticAgents.map((agent) => {
+              const isSelected = selectedPersonaIds.includes(agent.id);
               return (
                 <div
-                  key={persona.id}
-                  onClick={() => togglePersona(persona.id)}
+                  key={agent.id}
+                  onClick={() => togglePersona(agent.id)}
                   className={`p-3 rounded-lg border cursor-pointer transition-all ${
                     isSelected
                       ? 'bg-accent/15 border-accent/60 text-text-primary'
@@ -152,7 +152,7 @@ export const RunConfigModal: React.FC<RunConfigModalProps> = ({
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold">{persona.name}</span>
+                    <span className="text-xs font-semibold">{agent.name}</span>
                     <input
                       type="checkbox"
                       checked={isSelected}
@@ -160,7 +160,7 @@ export const RunConfigModal: React.FC<RunConfigModalProps> = ({
                       className="rounded accent-accent"
                     />
                   </div>
-                  <p className="text-[11px] text-text-muted mt-1 line-clamp-2">{persona.shortProfile}</p>
+                  <p className="text-[11px] text-text-muted mt-1 line-clamp-2">{agent.shortProfile}</p>
                 </div>
               );
             })}

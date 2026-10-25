@@ -1,6 +1,7 @@
 import { 
   Project, 
   Persona, 
+  SyntheticAgent,
   Scenario, 
   Run, 
   Finding, 
@@ -167,6 +168,9 @@ export const STARTER_PERSONAS: Persona[] = [
     updatedAt: '2026-10-01T10:00:00Z',
   },
 ];
+
+export const STARTER_SYNTHETIC_AGENTS: SyntheticAgent[] = STARTER_PERSONAS;
+export const STARTER_AGENTS: SyntheticAgent[] = STARTER_PERSONAS;
 
 export const SEED_SCENARIOS: Scenario[] = [
   {

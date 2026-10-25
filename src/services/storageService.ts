@@ -1,6 +1,7 @@
 import { 
   Project, 
   Persona, 
+  SyntheticAgent,
   Scenario, 
   Run, 
   Finding, 
@@ -95,7 +96,7 @@ export class StorageService {
     safeSet(STORAGE_KEYS.SCENARIOS, scenarios);
   }
 
-  // Personas
+  // Personas & Synthetic Agents
   static getPersonas(): Persona[] {
     return safeGet<Persona[]>(STORAGE_KEYS.PERSONAS, STARTER_PERSONAS);
   }
@@ -118,6 +119,23 @@ export class StorageService {
   static deletePersona(id: string): void {
     const personas = this.getPersonas().filter(p => p.id !== id);
     safeSet(STORAGE_KEYS.PERSONAS, personas);
+  }
+
+  // Synthetic Agents (clean aliases)
+  static getSyntheticAgents(): SyntheticAgent[] {
+    return this.getPersonas();
+  }
+
+  static getSyntheticAgent(id: string): SyntheticAgent | undefined {
+    return this.getPersona(id);
+  }
+
+  static saveSyntheticAgent(agent: SyntheticAgent): void {
+    this.savePersona(agent);
+  }
+
+  static deleteSyntheticAgent(id: string): void {
+    this.deletePersona(id);
   }
 
   // Scenarios

@@ -20,7 +20,7 @@ import { Card, CardHeader } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { api } from '../../services/api';
-import { Project, Run, Finding, Persona } from '../../types';
+import { Project, Run, Finding, SyntheticAgent } from '../../types';
 import { ProjectWizardModal } from '../projects/ProjectWizardModal';
 import { 
   BarChart, 
@@ -40,23 +40,23 @@ export const DashboardPage: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [runs, setRuns] = useState<Run[]>([]);
   const [findings, setFindings] = useState<Finding[]>([]);
-  const [personas, setPersonas] = useState<Persona[]>([]);
+  const [syntheticAgents, setSyntheticAgents] = useState<SyntheticAgent[]>([]);
   const [loading, setLoading] = useState(true);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
 
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      const [pList, rList, fList, perList] = await Promise.all([
+      const [pList, rList, fList, agentList] = await Promise.all([
         api.getProjects(),
         api.getRuns(),
         api.getFindings(),
-        api.getPersonas()
+        api.getSyntheticAgents()
       ]);
       setProjects(pList);
       setRuns(rList);
       setFindings(fList);
-      setPersonas(perList);
+      setSyntheticAgents(agentList);
     } catch (err: any) {
       console.warn('Failed to load dashboard data:', err);
     } finally {
@@ -194,7 +194,7 @@ export const DashboardPage: React.FC = () => {
             <Badge variant="teal" size="sm">Evidence Grounded</Badge>
           </div>
           <p className="text-xs text-text-muted mt-0.5">
-            Simulated persona runs detect goal friction and validate accessibility affordances before real user testing.
+            Simulated synthetic agent runs detect goal friction and validate accessibility affordances before real user testing.
           </p>
         </div>
         <div className="flex items-center gap-2">

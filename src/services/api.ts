@@ -116,7 +116,7 @@ export const api = {
     return await res.json();
   },
 
-  // Personas API
+  // Synthetic Agents & Personas API
   async getPersonas() {
     try {
       const res = await fetch(`${API_BASE}/personas`);
@@ -125,6 +125,10 @@ export const api = {
     } catch {
       return [];
     }
+  },
+
+  async getSyntheticAgents() {
+    return this.getPersonas();
   },
 
   async createPersona(data: {
@@ -142,9 +146,20 @@ export const api = {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Failed to create persona');
+      throw new Error(err.error || 'Failed to create synthetic agent');
     }
     return await res.json();
+  },
+
+  async createSyntheticAgent(data: {
+    name: string;
+    primaryGoal: string;
+    shortProfile?: string;
+    secondaryGoal?: string;
+    traits?: Record<string, any>;
+    avatarColor?: string;
+  }) {
+    return this.createPersona(data);
   },
 
   async updatePersona(id: string, updates: Record<string, any>) {
@@ -156,11 +171,19 @@ export const api = {
     return await res.json();
   },
 
+  async updateSyntheticAgent(id: string, updates: Record<string, any>) {
+    return this.updatePersona(id, updates);
+  },
+
   async deletePersona(id: string) {
     const res = await fetch(`${API_BASE}/personas/${encodeURIComponent(id)}`, {
       method: 'DELETE'
     });
     return await res.json();
+  },
+
+  async deleteSyntheticAgent(id: string) {
+    return this.deletePersona(id);
   },
 
   // Scenarios API

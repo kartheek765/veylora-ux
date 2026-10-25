@@ -224,7 +224,7 @@ export const ReportsPage: React.FC = () => {
         {activeReport.executiveSummary && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="p-4 rounded-xl bg-surface-subtle border border-border">
-              <div className="text-xs text-text-muted uppercase">Personas Tested</div>
+              <div className="text-xs text-text-muted uppercase">Synthetic Agents Tested</div>
               <div className="text-2xl font-bold text-text-primary mt-1">
                 {activeReport.executiveSummary.totalPersonas ?? 1}
               </div>

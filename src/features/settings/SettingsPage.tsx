@@ -89,7 +89,7 @@ export const SettingsPage: React.FC = () => {
   const handleSeedDemoData = async () => {
     try {
       await api.seedDemoData();
-      toast.success('Seeded demo project, persona, and scenario into local SQLite');
+      toast.success('Seeded demo project, synthetic agent, and scenario into local SQLite');
     } catch (err: any) {
       toast.error('Failed to seed demo data');
     }
@@ -108,9 +108,9 @@ export const SettingsPage: React.FC = () => {
 
   const handleExportWorkspace = async () => {
     try {
-      const [projects, personas, scenarios, runs, findings, reports] = await Promise.all([
+      const [projects, syntheticAgents, scenarios, runs, findings, reports] = await Promise.all([
         api.getProjects(),
-        api.getPersonas(),
+        api.getSyntheticAgents(),
         api.getScenarios(),
         api.getRuns(),
         api.getFindings(),
@@ -123,7 +123,8 @@ export const SettingsPage: React.FC = () => {
         exportedAt: new Date().toISOString(),
         database: 'backend/data/veylora.sqlite',
         projects: Array.isArray(projects) ? projects : StorageService.getProjects(),
-        personas: Array.isArray(personas) ? personas : StorageService.getPersonas(),
+        syntheticAgents: Array.isArray(syntheticAgents) ? syntheticAgents : StorageService.getSyntheticAgents(),
+        personas: Array.isArray(syntheticAgents) ? syntheticAgents : StorageService.getPersonas(),
         scenarios: Array.isArray(scenarios) ? scenarios : StorageService.getScenarios(),
         runs: Array.isArray(runs) ? runs : StorageService.getRuns(),
         findings: Array.isArray(findings) ? findings : StorageService.getFindings(),

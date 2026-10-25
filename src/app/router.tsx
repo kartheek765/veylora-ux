@@ -4,7 +4,7 @@ import { AppLayout } from '../components/layout/AppLayout';
 import { DashboardPage } from '../features/dashboard/DashboardPage';
 import { ProjectsListPage } from '../features/projects/ProjectsListPage';
 import { ProjectDetailPage } from '../features/projects/ProjectDetailPage';
-import { PersonasPage } from '../features/personas/PersonasPage';
+import { SyntheticAgentsPage } from '../features/personas/SyntheticAgentsPage';
 import { ScenariosPage } from '../features/scenarios/ScenariosPage';
 import { ScenarioBuilderPage } from '../features/scenarios/ScenarioBuilderPage';
 import { RunsPage } from '../features/runs/RunsPage';
@@ -44,16 +44,32 @@ export const router = createBrowserRouter([
         element: <ProjectDetailPage />,
       },
       {
+        path: 'synthetic-agents',
+        element: <SyntheticAgentsPage />,
+      },
+      {
+        path: 'synthetic-agents/new',
+        element: <SyntheticAgentsPage />,
+      },
+      {
+        path: 'synthetic-agents/:id',
+        element: <SyntheticAgentsPage />,
+      },
+      {
+        path: 'agent-sandbox',
+        element: <Navigate to="/synthetic-agents" replace />,
+      },
+      {
         path: 'personas',
-        element: <PersonasPage />,
+        element: <SyntheticAgentsPage />,
       },
       {
         path: 'personas/new',
-        element: <PersonasPage />,
+        element: <SyntheticAgentsPage />,
       },
       {
         path: 'personas/:id',
-        element: <PersonasPage />,
+        element: <SyntheticAgentsPage />,
       },
       {
         path: 'scenarios',

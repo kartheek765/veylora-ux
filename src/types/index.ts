@@ -27,7 +27,7 @@ export type PatienceLevel = 'low' | 'medium' | 'high';
 export type ReadingTendency = 'skimmer' | 'methodical' | 'minimalist';
 export type NavigationConfidence = 'hesitant' | 'exploratory' | 'confident';
 
-export interface PersonaTraits {
+export interface SyntheticAgentTraits {
   familiarity: FamiliarityLevel;
   patience: PatienceLevel;
   readingTendency: ReadingTendency;
@@ -38,14 +38,17 @@ export interface PersonaTraits {
   constraints?: string;
 }
 
-export interface Persona {
+export type PersonaTraits = SyntheticAgentTraits;
+export type AgentTraits = SyntheticAgentTraits;
+
+export interface SyntheticAgent {
   id: string;
   projectId?: string;
   name: string;
   shortProfile: string;
   primaryGoal: string;
   secondaryGoal?: string;
-  traits: PersonaTraits;
+  traits: SyntheticAgentTraits;
   enabled: boolean;
   version: number;
   isTemplate?: boolean;
@@ -53,6 +56,9 @@ export interface Persona {
   createdAt: string;
   updatedAt: string;
 }
+
+export type Persona = SyntheticAgent;
+export type Agent = SyntheticAgent;
 
 export type StepActionType = 
   | 'click' 

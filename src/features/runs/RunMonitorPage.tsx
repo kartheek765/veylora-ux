@@ -4,7 +4,7 @@ import { Card, CardHeader } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { api } from '../../services/api';
-import { Run, Project, Persona, Scenario, Finding, EvidenceItem, ActionEvent } from '../../types';
+import { Run, Project, SyntheticAgent, Scenario, Finding, EvidenceItem, ActionEvent } from '../../types';
 import { 
   Square, 
   ArrowLeft, 
@@ -29,7 +29,7 @@ export const RunMonitorPage: React.FC = () => {
 
   const [run, setRun] = useState<Run | null>(null);
   const [project, setProject] = useState<Project | null>(null);
-  const [personas, setPersonas] = useState<Persona[]>([]);
+  const [syntheticAgents, setSyntheticAgents] = useState<SyntheticAgent[]>([]);
   const [scenario, setScenario] = useState<Scenario | null>(null);
   const [events, setEvents] = useState<ActionEvent[]>([]);
   const [findings, setFindings] = useState<Finding[]>([]);

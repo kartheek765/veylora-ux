@@ -308,6 +308,76 @@ export async function apiRoutes(fastify: FastifyInstance) {
     return { id: request.params.id, deleted: true, success: true };
   });
 
+  // 4b. Synthetic Agents CRUD (Clean aliases for /personas)
+  fastify.get('/synthetic-agents', async () => {
+    const rows = db.prepare('SELECT * FROM personas ORDER BY is_template DESC, name ASC').all() as any[];
+    return rows.map(r => ({
+      id: r.id,
+      name: r.name,
+      shortProfile: r.short_profile,
+      primaryGoal: r.primary_goal,
+      secondaryGoal: r.secondary_goal,
+      traits: JSON.parse(r.traits || '{}'),
+      enabled: r.enabled === 1,
+      version: r.version,
+      avatarColor: r.avatar_color,
+      isTemplate: r.is_template === 1,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at
+    }));
+  });
+
+  fastify.post('/synthetic-agents', async (request: FastifyRequest, reply) => {
+    const body = (request.body || {}) as any;
+    if (!body.name || !body.primaryGoal) {
+      return reply.status(400).send({ error: 'Name and primaryGoal are required' });
+    }
+
+    const id = `agent-${Date.now()}`;
+    const now = new Date().toISOString();
+
+    db.prepare(`
+      INSERT INTO personas (id, name, short_profile, primary_goal, secondary_goal, traits, enabled, version, avatar_color, is_template, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, 1, 1, ?, 0, ?, ?)
+    `).run(
+      id,
+      body.name.trim(),
+      body.shortProfile || '',
+      body.primaryGoal.trim(),
+      body.secondaryGoal || '',
+      JSON.stringify(body.traits || {}),
+      body.avatarColor || '#6366F1',
+      now,
+      now
+    );
+
+    return reply.status(201).send({ id, name: body.name, success: true });
+  });
+
+  fastify.patch('/synthetic-agents/:id', async (request: FastifyRequest<{ Params: { id: string } }>, reply) => {
+    const p = db.prepare('SELECT * FROM personas WHERE id = ?').get(request.params.id) as any;
+    if (!p) return reply.status(404).send({ error: 'Synthetic agent not found' });
+
+    const body = (request.body || {}) as any;
+    const updatedEnabled = body.enabled !== undefined ? (body.enabled ? 1 : 0) : p.enabled;
+    const now = new Date().toISOString();
+
+    db.prepare(`
+      UPDATE personas
+      SET enabled = ?, updated_at = ?
+      WHERE id = ?
+    `).run(updatedEnabled, now, request.params.id);
+
+    return { id: request.params.id, enabled: updatedEnabled === 1, success: true };
+  });
+
+  fastify.delete('/synthetic-agents/:id', async (request: FastifyRequest<{ Params: { id: string } }>, reply) => {
+    const p = db.prepare('SELECT id FROM personas WHERE id = ?').get(request.params.id);
+    if (!p) return reply.status(404).send({ error: 'Synthetic agent not found' });
+    db.prepare('DELETE FROM personas WHERE id = ?').run(request.params.id);
+    return { id: request.params.id, deleted: true, success: true };
+  });
+
   // 5. Scenarios & AI Plan Generation
   fastify.get('/scenarios', async (request: FastifyRequest<{ Querystring: { projectId?: string } }>) => {
     let rows: any[];
