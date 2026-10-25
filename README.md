@@ -41,7 +41,7 @@ If you are evaluating this project, here is the fastest way to verify its genuin
 
 | Evaluation Step | What to Do | What You Will Observe (Real Evidence) |
 |---|---|---|
-| **1. Zero-Mock Clean State** | Open [`http://127.0.0.1:5173`](http://127.0.0.1:5173) | Honest empty dashboard with 0 fake statistics, 0 fabricated projects. |
+| **1. Zero-Mock Clean State** | Open [`https://veylora-ux.vercel.app/`](https://veylora-ux.vercel.app/) | Honest empty dashboard with 0 fake statistics, 0 fabricated projects. |
 | **2. Real Project Creation** | Click **Projects** ➔ **Create Project** (Name: `Example Audit`, URL: `https://example.com`) | Real SQLite insert via Fastify REST API (`/api/projects`). Project persists on reload. |
 | **3. Real Website Smoke Test** | On Project Detail page, click **Run Website Smoke Test** | Real Playwright headless Chromium launches, navigates to `https://example.com`, records real HTTP status, extracts page title, and saves actual PNG screenshot. |
 | **4. Live Run Monitor** | Watch the Run Monitor page | Honest states (`queued` ➔ `running` ➔ `passed`), real step timings, live screenshot served via backend static route. **Zero fake `setTimeout` timers.** |
