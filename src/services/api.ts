@@ -363,12 +363,21 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url })
       });
-      const data = await res.json().catch(() => ({}));
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch {
+        const text = await res.text().catch(() => '');
+        throw new Error(text || `Backend server returned HTTP ${res.status}`);
+      }
       if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to initialize quick audit');
+        throw new Error(data.error || data.message || `Quick audit rejected by server (HTTP ${res.status})`);
       }
       return data;
     } catch (e: any) {
+      if (e.message?.includes('Failed to fetch') || e.name === 'TypeError') {
+        throw new Error(`Backend server is offline or unreachable at ${API_BASE}. Please ensure backend is running with "npm run dev".`);
+      }
       console.warn('[API] quickAudit failed:', e);
       throw e;
     }

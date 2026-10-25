@@ -52,8 +52,9 @@ async function bootstrap() {
     decorateReply: false
   });
 
-  // 7. Register API routes under /api
+  // 7. Register API routes both under /api and at root (for reverse proxy & Vercel flexibility)
   await server.register(apiRoutes, { prefix: '/api' });
+  await server.register(apiRoutes);
 
   // 8. Global error handler: do not expose internal stack traces or secrets to client
   server.setErrorHandler((error, request, reply) => {
@@ -67,30 +68,47 @@ async function bootstrap() {
     });
   });
 
-  // 9. Start server bound to 127.0.0.1
-  try {
-    const address = await server.listen({
-      host: config.host,
-      port: config.port
-    });
-    console.log(`[Veylora Backend] Server running at ${address} (Bound to ${config.host})`);
-  } catch (err) {
-    server.log.error(err);
-    process.exit(1);
+  // 9. Start server bound to 127.0.0.1 (or 0.0.0.0 in cloud)
+  if (!process.env.VERCEL) {
+    try {
+      const address = await server.listen({
+        host: config.host,
+        port: config.port
+      });
+      console.log(`[Veylora Backend] Server running at ${address} (Bound to ${config.host})`);
+    } catch (err) {
+      server.log.error(err);
+      process.exit(1);
+    }
+
+    // Graceful shutdown
+    const signals: NodeJS.Signals[] = ['SIGINT', 'SIGTERM'];
+    for (const signal of signals) {
+      process.on(signal, async () => {
+        console.log(`\n[Veylora Backend] Received ${signal}. Shutting down gracefully...`);
+        await server.close();
+        process.exit(0);
+      });
+    }
   }
 
-  // Graceful shutdown
-  const signals: NodeJS.Signals[] = ['SIGINT', 'SIGTERM'];
-  for (const signal of signals) {
-    process.on(signal, async () => {
-      console.log(`\n[Veylora Backend] Received ${signal}. Shutting down gracefully...`);
-      await server.close();
-      process.exit(0);
-    });
-  }
+  return server;
 }
 
-bootstrap().catch(err => {
-  console.error('[Veylora Backend] Fatal bootstrap error:', err);
-  process.exit(1);
-});
+let appInstance: any = null;
+
+// Export default handler for Vercel Serverless Function execution
+export default async function handler(req: any, res: any) {
+  if (!appInstance) {
+    appInstance = await bootstrap();
+    await appInstance.ready();
+  }
+  appInstance.server.emit('request', req, res);
+}
+
+if (!process.env.VERCEL) {
+  bootstrap().catch(err => {
+    console.error('[Veylora Backend] Fatal bootstrap error:', err);
+    process.exit(1);
+  });
+}
