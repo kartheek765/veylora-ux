@@ -1,12 +1,14 @@
 process.env.NODE_ENV = 'test';
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert';
+import Fastify from 'fastify';
 import { db, initDatabase } from '../src/db/index.js';
 import { IntentClassifierService } from '../src/services/intentClassifierService.js';
 import { LanguageService } from '../src/services/languageService.js';
 import { KnowledgeBaseService } from '../src/services/knowledgeBaseService.js';
 import { IntentDetectiveService } from '../src/services/intentDetectiveService.js';
 import { EvidenceGuardService } from '../src/services/evidenceGuardService.js';
+import { apiRoutes } from '../src/routes/api.js';
 
 describe('Veylora UX — Signature Feature & Ask Veylora Intelligence Tests', () => {
   before(() => {
@@ -214,6 +216,91 @@ describe('Veylora UX — Signature Feature & Ask Veylora Intelligence Tests', ()
       assert.ok(!redacted.includes('4111 2222 3333 4444'), 'Card must be redacted');
       assert.ok(redacted.includes('[REDACTED_PASSWORD]'));
       assert.ok(redacted.includes('[REDACTED_CARD]'));
+    });
+  });
+
+  // 7. Instant URL Auto-Audit (Zero AI Credits + Direct Execution)
+  describe('INSTANT AUTO-AUDIT — Safe Provisioning & Headless Execution', () => {
+    let app: any;
+
+    before(async () => {
+      app = Fastify();
+      await app.register(apiRoutes, { prefix: '/api' });
+    });
+
+    it('rejects requests with missing or empty URL', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/assistant/quick-audit',
+        payload: {}
+      });
+      assert.strictEqual(res.statusCode, 400);
+      const data = res.json();
+      assert.ok(data.error.includes('URL is required'));
+    });
+
+    it('rejects cloud metadata and prohibited destinations via SSRF guard', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/assistant/quick-audit',
+        payload: { url: 'http://169.254.169.254/latest/meta-data' }
+      });
+      assert.strictEqual(res.statusCode, 400);
+      const data = res.json();
+      assert.ok(data.error.toLowerCase().includes('blocked') || data.error.toLowerCase().includes('cloud metadata'));
+    });
+
+    it('auto-provisions project, smoke scenario, and launches headless run for valid URL', async () => {
+      const targetUrl = 'https://staging.acme-corp.dev/login';
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/assistant/quick-audit',
+        payload: { url: targetUrl }
+      });
+
+      assert.strictEqual(res.statusCode, 201);
+      const data = res.json();
+
+      assert.strictEqual(data.success, true);
+      assert.ok(data.runId.startsWith('run-'));
+      assert.ok(data.projectId.startsWith('proj-'));
+      assert.strictEqual(data.targetUrl, targetUrl);
+      assert.strictEqual(data.hostname, 'staging.acme-corp.dev');
+      assert.ok(data.agentCount >= 1);
+
+      // Verify Project record in SQLite
+      const proj = db.prepare('SELECT * FROM projects WHERE id = ?').get(data.projectId) as any;
+      assert.ok(proj, 'Project must be created in SQLite');
+      assert.strictEqual(proj.source_url, targetUrl);
+      assert.ok(proj.allowed_domains.includes('staging.acme-corp.dev'));
+
+      // Verify Scenario record in SQLite with deterministic steps (Zero AI Credits)
+      const scen = db.prepare('SELECT * FROM scenarios WHERE id = ?').get(data.scenarioId) as any;
+      assert.ok(scen, 'Scenario must exist');
+      const steps = JSON.parse(scen.steps);
+      assert.strictEqual(steps.length, 5);
+      assert.strictEqual(steps[0].actionType, 'goto');
+      assert.strictEqual(steps[0].value, targetUrl);
+
+      // Verify Run record in SQLite
+      const run = db.prepare('SELECT * FROM runs WHERE id = ?').get(data.runId) as any;
+      assert.ok(run, 'Run must exist');
+      assert.strictEqual(run.project_id, data.projectId);
+      assert.strictEqual(run.action_budget, 15);
+      assert.strictEqual(run.browser, 'chromium');
+    });
+
+    it('reuses existing project when auditing another URL on same hostname', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/assistant/quick-audit',
+        payload: { url: 'https://staging.acme-corp.dev/dashboard' }
+      });
+
+      assert.strictEqual(res.statusCode, 201);
+      const data = res.json();
+      const existingProj = db.prepare("SELECT * FROM projects WHERE source_url LIKE '%staging.acme-corp.dev%'").get() as any;
+      assert.strictEqual(data.projectId, existingProj.id, 'Should reuse existing project for same hostname');
     });
   });
 });

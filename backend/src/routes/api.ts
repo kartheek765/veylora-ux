@@ -1200,6 +1200,150 @@ export async function apiRoutes(fastify: FastifyInstance) {
     };
   });
 
+  // 13.B Instant URL Auto-Audit (Direct Execution, Zero AI Credits)
+  fastify.post('/assistant/quick-audit', async (request: FastifyRequest, reply) => {
+    const body = (request.body || {}) as any;
+    const rawUrl = body.url || body.targetUrl;
+    if (!rawUrl || typeof rawUrl !== 'string' || rawUrl.trim() === '') {
+      return reply.status(400).send({ error: 'Valid URL is required' });
+    }
+
+    // a. Run it through SSRFProtectionService.normalizeUrl and isSafeDestination
+    const normResult = SSRFProtectionService.normalizeUrl(rawUrl);
+    if (!normResult.valid || !normResult.normalized) {
+      return reply.status(400).send({ error: normResult.error || 'Invalid or prohibited URL' });
+    }
+    const targetUrl = normResult.normalized;
+    const parsedUrl = new URL(targetUrl);
+    const hostname = parsedUrl.hostname.toLowerCase();
+
+    const ssrfCheck = SSRFProtectionService.isSafeDestination(targetUrl, [hostname]);
+    if (!ssrfCheck.safe) {
+      return reply.status(400).send({ error: ssrfCheck.reason || 'Target URL violates security allowlist' });
+    }
+
+    const now = new Date().toISOString();
+
+    // b. Check if an active Project exists for this hostname; if not, automatically create a new project in SQLite
+    let project = db.prepare(`
+      SELECT * FROM projects 
+      WHERE source_url LIKE ? OR allowed_domains LIKE ?
+      ORDER BY created_at DESC LIMIT 1
+    `).get(`%://${hostname}%`, `%"${hostname}"%`) as any;
+
+    if (!project) {
+      const projectId = `proj-${Date.now()}`;
+      const projectName = `${hostname.charAt(0).toUpperCase() + hostname.slice(1)} Audit`;
+      db.prepare(`
+        INSERT INTO projects (
+          id, name, description, source_type, source_url, allowed_domains,
+          viewport, readiness_status, notes, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        projectId,
+        projectName,
+        `Automated instant audit project for ${targetUrl}`,
+        'website',
+        targetUrl,
+        JSON.stringify([hostname]),
+        'desktop-1440',
+        'demo-ready',
+        'Auto-provisioned via Ask Veylora Quick-Audit',
+        now,
+        now
+      );
+      project = db.prepare('SELECT * FROM projects WHERE id = ?').get(projectId) as any;
+    }
+
+    // c. Ensure a default smoke/journey scenario exists for the target URL
+    let scenario = db.prepare(`
+      SELECT * FROM scenarios WHERE project_id = ? ORDER BY created_at DESC LIMIT 1
+    `).get(project.id) as any;
+
+    if (!scenario) {
+      const scenarioId = `scen-${Date.now()}`;
+      const defaultSteps = [
+        { actionType: 'goto', value: targetUrl, description: `Navigate to ${targetUrl}` },
+        { actionType: 'wait_for', description: 'Wait for page hydration and DOM settling' },
+        { actionType: 'inspect', description: 'Inspect DOM interactive elements, page title, and accessibility tree' },
+        { actionType: 'scroll', value: '500', description: 'Scroll viewport to reveal below-the-fold content' },
+        { actionType: 'screenshot', description: 'Capture visual checkpoint of rendered content' }
+      ];
+
+      db.prepare(`
+        INSERT INTO scenarios (
+          id, project_id, title, natural_goal, starting_url, success_condition,
+          action_budget, time_budget_seconds, stop_conditions, steps,
+          test_data_fixtures, negative_paths, version, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+      `).run(
+        scenarioId,
+        project.id,
+        `${hostname} Interaction & Smoke Audit`,
+        `Explore ${targetUrl} for UX affordances, interaction responsiveness, and accessibility compliance`,
+        targetUrl,
+        'Page loads cleanly with zero unhandled DOM crashes or critical contrast violations',
+        15,
+        45,
+        JSON.stringify(['navigation_error', 'unhandled_crash']),
+        JSON.stringify(defaultSteps),
+        JSON.stringify({}),
+        JSON.stringify([]),
+        now,
+        now
+      );
+      scenario = db.prepare('SELECT * FROM scenarios WHERE id = ?').get(scenarioId) as any;
+    }
+
+    // d. Fetch all active synthetic agents (from personas table)
+    const activePersonas = db.prepare('SELECT id FROM personas WHERE enabled = 1').all() as { id: string }[];
+    const personaIds = activePersonas.length > 0 ? activePersonas.map(p => p.id) : ['persona-1'];
+
+    // e. Launch a real Playwright headless run via PlaywrightRunnerService.executeRun with an action budget of 15
+    const runId = `run-${Date.now()}`;
+    db.prepare(`
+      INSERT INTO runs (
+        id, project_id, persona_ids, scenario_ids, status, current_step_index, total_steps,
+        viewport, browser, model_mode, action_budget, actions_executed, started_at,
+        task_outcome, console_errors_count, network_errors_count, findings_count, is_demo_run
+      ) VALUES (?, ?, ?, ?, 'queued', 0, 0, ?, 'chromium', 'live', 15, 0, ?, 'in_progress', 0, 0, '{"critical":0,"serious":0,"moderate":0,"minor":0}', 0)
+    `).run(
+      runId,
+      project.id,
+      JSON.stringify(personaIds),
+      JSON.stringify([scenario.id]),
+      project.viewport || 'desktop-1440',
+      now
+    );
+
+    PlaywrightRunnerService.executeRun(runId).catch(err => {
+      console.error(`[PlaywrightRunner] Error during quick-audit run ${runId}:`, err);
+    });
+
+    // f. Return { success: true, runId, projectId, targetUrl, agentCount }
+    return reply.status(201).send({
+      success: true,
+      runId,
+      projectId: project.id,
+      scenarioId: scenario.id,
+      targetUrl,
+      hostname,
+      agentCount: personaIds.length,
+      message: `Automated audit queued for ${hostname} across ${personaIds.length} synthetic agents.`
+    });
+  });
+
+  // Alias endpoint
+  fastify.post('/ask-veylora/quick-audit', async (request: FastifyRequest, reply) => {
+    return (fastify as any).inject({
+      method: 'POST',
+      url: '/api/assistant/quick-audit',
+      payload: request.body
+    }).then((res: any) => {
+      reply.status(res.statusCode).send(res.json());
+    });
+  });
+
   // 14. Local-First Privacy Controls (Phase 8)
   fastify.get('/privacy/settings', async () => {
     return PrivacyService.getSettings();

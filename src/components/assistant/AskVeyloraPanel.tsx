@@ -20,10 +20,12 @@ import {
   ChevronRight,
   Languages
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { api, AskVeyloraConversation, AskVeyloraMessage } from '../../services/api';
 import { useScreenContext } from '../../hooks/useScreenContext';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
+import { toast } from '../ui/Toast';
 
 interface AskVeyloraPanelProps {
   isOpen: boolean;
@@ -39,6 +41,7 @@ interface ActionConfirmationState {
 }
 
 export const AskVeyloraPanel: React.FC<AskVeyloraPanelProps> = ({ isOpen, onClose }) => {
+  const navigate = useNavigate();
   const screenContext = useScreenContext();
   const [conversations, setConversations] = useState<AskVeyloraConversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
@@ -152,8 +155,61 @@ export const AskVeyloraPanel: React.FC<AskVeyloraPanelProps> = ({ isOpen, onClos
       createdAt: new Date().toISOString()
     };
     setMessages(prev => [...prev, tempUserMsg]);
-    setIsLoading(true);
 
+    // Instant URL and Testing Intent Interceptor (Zero AI Credits + Direct Execution)
+    const urlRegex = /(https?:\/\/[^\s]+)/i;
+    const urlMatch = prompt.match(urlRegex);
+
+    const hasTestingIntent = (p: string) => {
+      const cleaned = p.replace(urlRegex, '').trim().toLowerCase();
+      // If prompt is essentially just the URL (with minimal or no extra text)
+      if (cleaned.length <= 4) return true;
+      // Or contains testing/auditing intent keywords in English, Telugu, or Tanglish
+      return /test|audit|run|check|scenario|evaluat|smoke|journey|inspect|verify|chudu|chey|cheyyi|analyze|benchmark|monitor/i.test(p);
+    };
+
+    if (urlMatch && hasTestingIntent(prompt)) {
+      const rawMatchedUrl = urlMatch[1].replace(/[.,;:!?)"'>]+$/, '');
+      const loadingMsgId = `loading-${Date.now()}`;
+
+      // Sleek loading state in the chat bubble
+      const loadingAssistantMsg: AskVeyloraMessage = {
+        id: loadingMsgId,
+        conversationId: activeConversationId || 'pending',
+        role: 'assistant',
+        content: `Target identified: ${rawMatchedUrl}. Provisioning synthetic agents and launching Playwright runner...`,
+        createdAt: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, loadingAssistantMsg]);
+      setIsLoading(true);
+
+      try {
+        const result = await api.quickAudit(rawMatchedUrl);
+        if (result.success && result.runId) {
+          const confirmationText = `🚀 Automated Quick-Audit launched!\n\n• Target: ${result.targetUrl}\n• Run ID: ${result.runId}\n• Synthetic Agents: ${result.agentCount}\n• Action Budget: 15 steps (Zero AI Credits spent)\n\nNavigating to Live Monitor...`;
+
+          setMessages(prev => prev.map(m => m.id === loadingMsgId ? { ...m, content: confirmationText } : m));
+          toast.success(`🚀 Automated audit launched for ${result.hostname || rawMatchedUrl}. Navigating to Live Monitor...`);
+
+          setTimeout(() => {
+            onClose();
+            navigate(`/runs/${result.runId}`);
+          }, 800);
+          return;
+        }
+      } catch (err: any) {
+        const failureText = `❌ Audit initialization failed: ${err?.message || 'Unable to start Playwright runner'}`;
+        setErrorMessage(err?.message || 'Quick audit failed to start.');
+        setMessages(prev => prev.map(m => m.id === loadingMsgId ? { ...m, content: failureText } : m));
+        return;
+      } finally {
+        setIsLoading(false);
+        setTimeout(() => textareaRef.current?.focus(), 50);
+      }
+    }
+
+    // Standard AI Chat Flow (Gemini / Local Knowledge Base)
+    setIsLoading(true);
     try {
       const response = await api.sendChatMessage({
         conversationId: activeConversationId || undefined,
@@ -261,6 +317,7 @@ export const AskVeyloraPanel: React.FC<AskVeyloraPanelProps> = ({ isOpen, onClos
     const route = screenContext.route;
     if (route.includes('/detective')) {
       return [
+        'Test my website: https://example.com',
         'How does Intent-to-Failure Detective work?',
         'Bro, website goal ela test cheyyali?',
         'Explain step assertions and failure diagnosis'
@@ -268,6 +325,7 @@ export const AskVeyloraPanel: React.FC<AskVeyloraPanelProps> = ({ isOpen, onClos
     }
     if (route.includes('/roadmap')) {
       return [
+        'Test my website: https://example.com',
         'How is the priority score calculated?',
         'What is the difference between P0 and P3?',
         'Tanglish lo roadmap gurinchi cheppu'
@@ -275,6 +333,7 @@ export const AskVeyloraPanel: React.FC<AskVeyloraPanelProps> = ({ isOpen, onClos
     }
     if (route.includes('/comparisons')) {
       return [
+        'Test my website: https://example.com',
         'Why is an issue marked Inconclusive instead of Fixed?',
         'What is a verified fix?',
         'What is Playwright?'
@@ -282,6 +341,7 @@ export const AskVeyloraPanel: React.FC<AskVeyloraPanelProps> = ({ isOpen, onClos
     }
     if (route.includes('/findings')) {
       return [
+        'Test my website: https://example.com',
         'What is the difference between Verified and AI Hypothesis?',
         'How can I trigger a re-test for this finding?',
         'How do I create a project?'
@@ -289,12 +349,14 @@ export const AskVeyloraPanel: React.FC<AskVeyloraPanelProps> = ({ isOpen, onClos
     }
     if (route.includes('/settings')) {
       return [
+        'Test my website: https://example.com',
         'What data is sent to the Gemini API?',
         'How does sensitive field redaction work?',
         'What is Playwright?'
       ];
     }
     return [
+      'Test my website: https://example.com',
       'What is Playwright?',
       'How do I create a project?',
       'Bro, project ela create cheyyali?',
@@ -507,22 +569,31 @@ export const AskVeyloraPanel: React.FC<AskVeyloraPanelProps> = ({ isOpen, onClos
                     <span>Intent-Aware Veylora Assistant</span>
                   </div>
                   <p className="text-xs text-[#94A3B8] leading-relaxed">
-                    Ask me any question in <strong>English</strong>, <strong>Telugu (తెలుగు)</strong>, or <strong>Tanglish</strong> (e.g. <em>"Bro, project ela create cheyyali?"</em>). I understand general concepts (like Playwright & WCAG), navigation how-tos, active findings, and website investigation.
+                    Ask me any question in <strong>English</strong>, <strong>Telugu (తెలుగు)</strong>, or <strong>Tanglish</strong>, or paste any website link (e.g. <em>"Test https://example.com"</em>) to launch an instant automated Playwright audit with zero AI credits.
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   <p className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider">
-                    Suggested questions:
+                    Suggested questions & quick actions:
                   </p>
                   <div className="flex flex-col gap-1.5">
                     {getContextChips().map((chip, idx) => (
                       <button
                         key={idx}
                         onClick={() => handleSendMessage(chip)}
-                        className="text-left px-3 py-2 rounded-lg bg-[#111722] border border-[#1E293B] hover:border-indigo-500/50 text-xs text-[#94A3B8] hover:text-white hover:bg-[#18212F] transition-all"
+                        className={`text-left px-3 py-2 rounded-lg border transition-all flex items-center justify-between gap-2 text-xs ${
+                          chip.startsWith('Test my website:')
+                            ? 'bg-indigo-950/40 border-indigo-500/50 text-indigo-300 hover:bg-indigo-900/50 hover:text-white hover:border-indigo-400 font-medium'
+                            : 'bg-[#111722] border-[#1E293B] hover:border-indigo-500/50 text-[#94A3B8] hover:text-white hover:bg-[#18212F]'
+                        }`}
                       >
-                        {chip}
+                        <span>{chip}</span>
+                        {chip.startsWith('Test my website:') && (
+                          <span className="text-[10px] uppercase font-semibold tracking-wider px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0">
+                            Instant Audit
+                          </span>
+                        )}
                       </button>
                     ))}
                   </div>

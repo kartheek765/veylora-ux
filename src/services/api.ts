@@ -345,6 +345,35 @@ export const api = {
     }
   },
 
+  // Instant URL Auto-Audit (Direct Execution, Zero AI Credits)
+  async quickAudit(url: string): Promise<{
+    success: boolean;
+    runId: string;
+    projectId: string;
+    scenarioId?: string;
+    targetUrl: string;
+    hostname?: string;
+    agentCount: number;
+    message?: string;
+    error?: string;
+  }> {
+    try {
+      const res = await fetch(`${API_BASE}/assistant/quick-audit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to initialize quick audit');
+      }
+      return data;
+    } catch (e: any) {
+      console.warn('[API] quickAudit failed:', e);
+      throw e;
+    }
+  },
+
   // Playwright Run Execution
   async startRun(projectId: string, personaIds: string[], scenarioIds: string[], actionBudget = 15) {
     try {
