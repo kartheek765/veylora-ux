@@ -35,14 +35,9 @@ async function bootstrap() {
     keepAliveTimeout: 30000
   });
 
-  // 5. Restrict CORS to local frontend origins
+  // 5. Allow CORS for local dev and cloud deployments
   await server.register(cors, {
-    origin: [
-      'http://localhost:5173',
-      'http://127.0.0.1:5173',
-      'http://localhost:3000',
-      'http://127.0.0.1:3000'
-    ],
+    origin: true,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS']
   });
 

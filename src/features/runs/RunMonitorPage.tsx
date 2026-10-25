@@ -389,7 +389,7 @@ export const RunMonitorPage: React.FC = () => {
               {selectedEvidence?.localPath ? (
                 <div className="w-full flex flex-col items-center justify-center">
                   <img
-                    src={`http://127.0.0.1:3001${selectedEvidence.localPath}`}
+                    src={selectedEvidence.localPath.startsWith('http') ? selectedEvidence.localPath : `${import.meta.env.DEV ? 'http://127.0.0.1:3001' : ''}${selectedEvidence.localPath}`}
                     alt={selectedEvidence.caption || selectedEvidence.pageTitle || 'Playwright Screenshot Evidence'}
                     className="max-w-full max-h-[380px] rounded-lg shadow-elevated border border-border object-contain bg-surface"
                     onError={(e) => {
